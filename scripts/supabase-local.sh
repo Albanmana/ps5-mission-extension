@@ -7,6 +7,49 @@
 RESEAU_LOCAL=ps5-mission-local
 PORT_BASE=54322
 
+SUPABASE_MIN=2.109.0
+
+# « npm run » ajoute au PATH les node_modules/.bin de tous les dossiers
+# parents : une vieille CLI oubliée là passe alors devant la bonne. On prend la
+# première assez récente, et « supabase » désigne ensuite celle-là.
+choisir_supabase() {
+  local candidat version trouvees=""
+  unset -f supabase 2>/dev/null
+  while IFS= read -r candidat; do
+    [ -n "$candidat" ] || continue
+    version=$("$candidat" --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+    [ -n "$version" ] || continue
+    if version_suffisante "$version" "$SUPABASE_MIN"; then
+      SUPABASE_BIN=$candidat
+      SUPABASE_VERSION=$version
+      supabase() { "$SUPABASE_BIN" "$@"; }
+      return 0
+    fi
+    trouvees="$trouvees
+    $version : $candidat"
+  done <<< "$(type -aP supabase 2>/dev/null)"
+  if [ -z "$trouvees" ]; then
+    echo "ÉCHEC : Supabase CLI introuvable. Installez-la : brew install supabase/tap/supabase" >&2
+  else
+    echo "ÉCHEC : Supabase CLI trop ancienne (il faut $SUPABASE_MIN ou plus récente). Trouvé :$trouvees" >&2
+    echo "  Mettez-la à jour : brew upgrade supabase (ou brew install supabase/tap/supabase)" >&2
+  fi
+  return 1
+}
+
+# version_suffisante 2.109.1 2.109.0
+version_suffisante() {
+  local IFS=. i a b
+  local -a actuelle=($1) minimum=($2)
+  for i in 0 1 2; do
+    a=${actuelle[i]:-0}
+    b=${minimum[i]:-0}
+    [ "$a" -gt "$b" ] && return 0
+    [ "$a" -lt "$b" ] && return 1
+  done
+  return 0
+}
+
 demarrer_base() {
   if ! docker network inspect "$RESEAU_LOCAL" >/dev/null 2>&1; then
     if ! docker network create -o com.docker.network.bridge.host_binding_ipv4=127.0.0.1 "$RESEAU_LOCAL" >/dev/null; then

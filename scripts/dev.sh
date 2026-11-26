@@ -71,6 +71,7 @@ fi
 # « supabase start » ne fait rien si la base de CE projet tourne déjà, et
 # échoue si un autre projet occupe le port : on ne migre jamais la mauvaise base.
 echo "▸ Base de données locale"
+choisir_supabase || exit 1
 demarrer_base || exit 1
 
 echo "▸ Migrations en attente"

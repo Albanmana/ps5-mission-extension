@@ -37,7 +37,7 @@ La référence technique est dans [docs/technique.md](docs/technique.md).
 | macOS | |
 | [Node.js](https://nodejs.org) (avec npm) | 22 ou plus récent |
 | [Docker Desktop](https://www.docker.com/products/docker-desktop/) | version récente, démarré |
-| [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) | testé avec 2.109.1 (`brew install supabase/tap/supabase`) |
+| [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) | 2.109.0 ou plus récente (`brew install supabase/tap/supabase`) ; une version plus ancienne présente ailleurs est ignorée |
 | [Google Chrome](https://www.google.com/chrome/) | version récente, avec le panneau latéral |
 | Compte leboncoin | le vôtre |
 | Clé [OpenRouter](https://openrouter.ai) | avec du crédit |

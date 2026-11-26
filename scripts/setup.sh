@@ -12,7 +12,6 @@ cd "$RACINE" || exit 1
 source "$RACINE/scripts/supabase-local.sh"
 
 NODE_MIN=22
-SUPABASE_TESTEE=2.109.1
 # Remplaçable pour les tests ou une installation ailleurs.
 CHROME="${PS5_CHROME_APP:-/Applications/Google Chrome.app}"
 
@@ -57,10 +56,10 @@ elif ! docker info >/dev/null 2>&1; then
   manque "Docker Desktop n'est pas démarré." "Ouvrez l'application Docker, attendez qu'elle soit prête, puis relancez."
 fi
 
-if ! present supabase; then
-  manque "Supabase CLI introuvable." "Installez-le : brew install supabase/tap/supabase"
+if choisir_supabase; then
+  echo "  Supabase CLI : $SUPABASE_VERSION ($SUPABASE_BIN)"
 else
-  echo "  Supabase CLI : $(supabase --version 2>/dev/null | head -1) (testé avec $SUPABASE_TESTEE)"
+  erreurs=$((erreurs + 1))
 fi
 
 if [ ! -d "$CHROME" ]; then
