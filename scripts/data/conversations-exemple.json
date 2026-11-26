@@ -1,0 +1,17 @@
+[
+  {
+    "conversation_url": "https://www.leboncoin.fr/messages/id/00000000-0000-4000-8000-000000000001",
+    "vendeur": "Vendeur Fictif",
+    "ad_href": "/ad/consoles/1000000001",
+    "annonce_titre": "PS5 avec lecteur (exemple fictif)",
+    "ad_prix_eur": 380,
+    "statut": "en_attente_moi",
+    "offre_envoyee_eur": 340,
+    "messages": [
+      { "expediteur": "moi", "contenu": "Bonjour, est elle toujours disponible ?", "envoye_le": "2026-01-01T10:00:00+01:00", "type": "texte", "montant_eur": null, "lu": true },
+      { "expediteur": "vendeur", "contenu": "Oui toujours disponible", "envoye_le": "2026-01-01T10:05:00+01:00", "type": "texte", "montant_eur": null, "lu": true },
+      { "expediteur": "moi", "contenu": "je peux faire 340 ça vous va ?", "envoye_le": "2026-01-01T10:07:00+01:00", "type": "offre", "montant_eur": 340, "lu": true },
+      { "expediteur": "vendeur", "contenu": "Je reste à 380", "envoye_le": "2026-01-01T10:12:00+01:00", "type": "texte", "montant_eur": null, "lu": false }
+    ]
+  }
+]

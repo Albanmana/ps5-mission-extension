@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.*
+!.env.example
+logs/
+*.log
+.DS_Store
+.worktrees/
+# Sauvegardes de la base (données personnelles)
+sauvegardes/
+# Liste locale utilisée par scripts/export-handoff.sh
+.handoff-forbidden

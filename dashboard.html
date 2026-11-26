@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PS5 Mission — Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1e222b;
+    --border: #2a2f3a;
+    --text: #e8eaf0;
+    --text-dim: #8b91a1;
+    --accent: #4f8cff;
+    --gold: #f4c542;
+    --green: #3ecf8e;
+    --orange: #f4a442;
+    --red: #e5484d;
+    --gray: #4a4f5c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+  }
+  h1 {
+    margin: 0 0 12px;
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h1 .count { color: var(--text-dim); font-weight: 400; font-size: 14px; }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    align-items: center;
+  }
+  .filters input[type="text"] {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    width: 220px;
+  }
+  .filters select {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    font-size: 12.5px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .chip input { margin: 0; accent-color: var(--accent); }
+  .chip.active-saint_graal { border-color: var(--gold); }
+  .chip.active-interessant { border-color: var(--green); }
+  .chip.active-a_verifier { border-color: var(--orange); }
+  .chip.active-disqualifiee { border-color: var(--red); }
+  button.btn {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  button.btn:hover { border-color: var(--accent); }
+
+  .view-toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .view-btn {
+    background: var(--panel-2);
+    color: var(--text-dim);
+    border: none;
+    padding: 7px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .view-btn + .view-btn { border-left: 1px solid var(--border); }
+  .view-btn.active { background: var(--accent); color: #fff; }
+
+  #status-bar { padding: 8px 20px; font-size: 13px; color: var(--text-dim); }
+  #status-bar.error { color: var(--red); }
+
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    padding: 16px 20px 60px;
+  }
+  #grid.view-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color .15s;
+  }
+  .card.disqualified { opacity: 0.55; }
+  .card:hover { border-color: #3a4152; }
+
+  .img-area {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: var(--panel-2);
+  }
+  .img-area .no-img {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-dim); font-size: 13px;
+  }
+  .img-area .single-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    cursor: pointer;
+  }
+  .img-grid {
+    width: 100%; height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 2px;
+  }
+  .img-grid .cell {
+    position: relative;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .img-grid .cell img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .img-grid .cell .more-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #0f1115;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .badge.saint_graal { background: var(--gold); }
+  .badge.interessant { background: var(--green); }
+  .badge.a_verifier { background: var(--orange); }
+  .badge.disqualifiee { background: var(--red); color: #fff; }
+  .badge.none { background: var(--gray); color: #fff; }
+
+  .count-badge {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .price-row { display: flex; justify-content: space-between; align-items: baseline; }
+  .price { font-size: 20px; font-weight: 700; }
+  .date-row {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .date-row.unknown { color: var(--text-dim); font-weight: 400; font-style: italic; }
+  .titre {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.35;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .titre:hover { color: var(--accent); }
+  .meta { font-size: 12.5px; color: var(--text-dim); display: flex; flex-wrap: wrap; gap: 4px 10px; }
+  .icons { font-size: 12.5px; color: var(--text-dim); display: flex; flex-wrap: wrap; gap: 4px 10px; }
+  .icons .yes { color: var(--green); }
+  .icons .no { color: var(--red); }
+  .raison { font-size: 12px; color: var(--red); font-style: italic; line-height: 1.3; }
+  .actions { display: flex; gap: 8px; margin-top: auto; padding-top: 4px; }
+  .actions a, .actions button {
+    flex: 1;
+    text-align: center;
+    padding: 7px 8px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    background: var(--panel-2);
+    color: var(--text);
+  }
+  .actions a:hover { border-color: var(--accent); color: var(--accent); }
+  .actions button.disqualify:hover { border-color: var(--red); color: var(--red); }
+  .actions button.requalify:hover { border-color: var(--green); color: var(--green); }
+
+  /* Vue liste (façon leboncoin) */
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    transition: border-color .15s;
+  }
+  .row.disqualified { opacity: 0.55; }
+  .row:hover { border-color: #3a4152; }
+  .row .thumb {
+    position: relative;
+    width: 92px;
+    height: 92px;
+    flex: 0 0 auto;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--panel-2);
+    cursor: pointer;
+  }
+  .row .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .row .thumb .no-img { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 10.5px; text-align: center; }
+  .row .thumb .badge { top: 4px; left: 4px; font-size: 9.5px; padding: 2px 5px; }
+  .row .thumb .count-badge { bottom: 4px; right: 4px; font-size: 9.5px; padding: 1px 4px; }
+  .row .info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .row .info .titre {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .row .info .date-row { font-size: 12px; }
+  .row .info .meta, .row .info .icons {
+    font-size: 12px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .row .info .raison { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .side {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    width: 160px;
+  }
+  .row .side .price { font-size: 18px; font-weight: 700; }
+  .row .side .actions { display: flex; gap: 6px; width: 100%; margin-top: 0; }
+  .row .side .actions a, .row .side .actions button {
+    font-size: 11.5px;
+    padding: 5px 6px;
+    white-space: nowrap;
+  }
+  @media (max-width: 640px) {
+    .row { flex-wrap: wrap; }
+    .row .side { width: 100%; align-items: flex-start; }
+  }
+
+  /* Lightbox */
+  #lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(6,7,10,0.92);
+    z-index: 100;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+  }
+  #lightbox.open { display: flex; }
+  #lightbox .lb-top {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  #lightbox .lb-title { font-size: 14px; color: var(--text-dim); }
+  #lightbox .lb-close, #lightbox .lb-open-ad {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  #lightbox .lb-main {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+  }
+  #lightbox .lb-main img {
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+  #lightbox .lb-nav {
+    background: rgba(23,26,33,0.85);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  #lightbox .lb-strip {
+    display: flex;
+    gap: 6px;
+    margin-top: 14px;
+    max-width: 900px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  #lightbox .lb-strip img {
+    width: 56px; height: 56px;
+    object-fit: cover;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    opacity: 0.6;
+    flex: 0 0 auto;
+  }
+  #lightbox .lb-strip img.selected { border-color: var(--accent); opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PS5 Mission — Dashboard <span class="count" id="count"></span></h1>
+  <div class="filters">
+    <input type="text" id="search" placeholder="Chercher (titre, ville)...">
+    <div class="chips" id="chips"></div>
+    <select id="sort">
+      <option value="best">Meilleures d'abord</option>
+      <option value="price_asc">Prix croissant</option>
+      <option value="price_desc">Prix décroissant</option>
+      <option value="date_desc">Plus récentes</option>
+    </select>
+    <button class="btn" id="refresh">↻ Rafraîchir</button>
+    <div class="view-toggle">
+      <button class="view-btn" id="view-grid">▦ Grille</button>
+      <button class="view-btn" id="view-list">☰ Liste</button>
+    </div>
+  </div>
+</header>
+
+<div id="status-bar"></div>
+<div id="grid"></div>
+
+<div id="lightbox">
+  <div class="lb-top">
+    <div class="lb-title" id="lb-title"></div>
+    <div style="display:flex; gap:8px;">
+      <a class="lb-open-ad" id="lb-open-ad" href="#" target="_blank" rel="noopener">Voir l'annonce ↗</a>
+      <button class="lb-close" id="lb-close">✕ Fermer</button>
+    </div>
+  </div>
+  <div class="lb-main">
+    <button class="lb-nav" id="lb-prev">‹</button>
+    <img id="lb-img" src="" alt="">
+    <button class="lb-nav" id="lb-next">›</button>
+  </div>
+  <div class="lb-strip" id="lb-strip"></div>
+</div>
+
+<script>
+const CLASSES = [
+  { key: 'saint_graal', label: '🏆 Saint Graal', default: true },
+  { key: 'interessant', label: '✅ Intéressant', default: true },
+  { key: 'a_verifier', label: '🔎 À vérifier', default: true },
+  { key: 'disqualifiee', label: '✖ Disqualifiées', default: false },
+];
+const RANK = { saint_graal: 0, interessant: 1, a_verifier: 2, disqualifiee: 3 };
+const BADGE_LABEL = {
+  saint_graal: '🏆 Saint Graal',
+  interessant: '✅ Intéressant',
+  a_verifier: '🔎 À vérifier',
+  disqualifiee: '✖ Disqualifiée',
+};
+
+let annonces = [];
+const activeClasses = new Set(CLASSES.filter(c => c.default).map(c => c.key));
+let searchTerm = '';
+let sortMode = 'best';
+let viewMode = 'grid';
+try {
+  viewMode = localStorage.getItem('ps5-dashboard-view') || 'grid';
+} catch {
+  // localStorage indisponible (navigation privée...) : on reste sur 'grid'.
+}
+
+function el(tag, props = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === 'class') node.className = v;
+    else if (k === 'text') node.textContent = v;
+    else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v);
+    else node.setAttribute(k, v);
+  }
+  for (const c of [].concat(children)) {
+    if (c === null || c === undefined) continue;
+    node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return node;
+}
+
+function setStatus(msg, isError = false) {
+  const bar = document.getElementById('status-bar');
+  bar.textContent = msg;
+  bar.classList.toggle('error', isError);
+}
+
+async function loadAnnonces() {
+  setStatus('Chargement...');
+  try {
+    const res = await fetch('/api/dashboard/annonces');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    ({ annonces } = await res.json());
+    setStatus(`${annonces.length} annonce(s) en base.`);
+    render();
+  } catch (e) {
+    setStatus(`Le serveur local ne répond pas (${e.message}). Vérifie qu'il tourne : npm run dev`, true);
+    document.getElementById('grid').innerHTML = '';
+  }
+}
+
+function imagesFor(a) {
+  if (Array.isArray(a.images) && a.images.length > 0) return a.images;
+  if (a.image_url) return [a.image_url];
+  return [];
+}
+
+function formatDateTime(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return d.toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+// date_publication = vraie date de mise en ligne leboncoin (uniquement dispo
+// pour les annonces dont la fiche détaillée a été lue). Pour les
+// autres (scrapées seulement via la page de résultats), on retombe sur
+// created_at (date à laquelle on a vu l'annonce la première fois) en le
+// précisant, plutôt que de laisser le champ vide.
+function publicationInfo(a) {
+  if (a.date_publication) return { known: true, text: `Publiée le ${formatDateTime(a.date_publication)}` };
+  if (a.created_at) return { known: false, text: `Vue le ${formatDateTime(a.created_at)} (date de publication inconnue)` };
+  return { known: false, text: 'Date inconnue' };
+}
+
+function sortDate(a) {
+  return a.date_publication || a.created_at || 0;
+}
+
+function openLightbox(imgs, startIndex, a) {
+  const lb = document.getElementById('lightbox');
+  const img = document.getElementById('lb-img');
+  const strip = document.getElementById('lb-strip');
+  const title = document.getElementById('lb-title');
+  const openAd = document.getElementById('lb-open-ad');
+  let idx = startIndex;
+
+  function show(i) {
+    idx = (i + imgs.length) % imgs.length;
+    img.src = imgs[idx];
+    title.textContent = `${a.titre || 'Annonce'} — photo ${idx + 1}/${imgs.length}`;
+    strip.querySelectorAll('img').forEach((t, ti) => t.classList.toggle('selected', ti === idx));
+  }
+
+  strip.innerHTML = '';
+  imgs.forEach((src, i) => {
+    strip.appendChild(el('img', { src, onclick: () => show(i) }));
+  });
+  openAd.href = a.url_annonce;
+  document.getElementById('lb-prev').onclick = () => show(idx - 1);
+  document.getElementById('lb-next').onclick = () => show(idx + 1);
+  show(idx);
+  lb.classList.add('open');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+document.getElementById('lb-close').addEventListener('click', closeLightbox);
+document.getElementById('lightbox').addEventListener('click', (e) => {
+  if (e.target.id === 'lightbox') closeLightbox();
+});
+document.addEventListener('keydown', (e) => {
+  if (!document.getElementById('lightbox').classList.contains('open')) return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowLeft') document.getElementById('lb-prev').click();
+  if (e.key === 'ArrowRight') document.getElementById('lb-next').click();
+});
+
+function buildImageArea(a) {
+  const imgs = imagesFor(a);
+  const wrap = el('div', { class: 'img-area' });
+
+  if (imgs.length === 0) {
+    wrap.appendChild(el('div', { class: 'no-img', text: 'Pas de photo' }));
+  } else if (imgs.length === 1) {
+    wrap.appendChild(el('img', {
+      class: 'single-img',
+      src: imgs[0],
+      alt: '',
+      onclick: () => openLightbox(imgs, 0, a),
+    }));
+  } else {
+    // Grille 2x2 de même superficie que l'ancienne image unique. S'il y a
+    // plus de 4 photos, la 4e case affiche un badge "+N" et ouvre la
+    // visionneuse pour parcourir le reste.
+    const gridImgs = imgs.slice(0, 4);
+    const grid = el('div', { class: 'img-grid' });
+    gridImgs.forEach((src, i) => {
+      const isLastWithMore = i === 3 && imgs.length > 4;
+      const cell = el('div', {
+        class: 'cell',
+        onclick: () => openLightbox(imgs, i, a),
+      }, [
+        el('img', { src, alt: '' }),
+        isLastWithMore ? el('div', { class: 'more-overlay', text: `+${imgs.length - 4}` }) : null,
+      ]);
+      grid.appendChild(cell);
+    });
+    wrap.appendChild(grid);
+  }
+
+  const cls = a.classification;
+  wrap.appendChild(el('div', {
+    class: `badge ${cls || 'none'}`,
+    text: cls ? BADGE_LABEL[cls] : '— Non analysée',
+  }));
+
+  // Compteur "1/N" en bas à droite (convention leboncoin), pour voir d'un
+  // coup d'œil combien de photos sont rattachées à l'annonce.
+  if (imgs.length > 0) {
+    wrap.appendChild(el('div', { class: 'count-badge', text: `1/${imgs.length}` }));
+  }
+
+  return wrap;
+}
+
+// Sous-composants partagés entre la vue grille (buildCard) et la vue liste
+// (buildRow), pour ne pas dupliquer la logique d'affichage.
+function buildTitre(a) {
+  return el('div', {
+    class: 'titre',
+    onclick: () => window.open(a.url_annonce, '_blank', 'noopener'),
+    text: a.titre || '(sans titre)',
+  });
+}
+
+function buildDateRow(a) {
+  const pubInfo = publicationInfo(a);
+  return el('div', { class: `date-row${pubInfo.known ? '' : ' unknown'}`, text: `🕒 ${pubInfo.text}` });
+}
+
+function buildMeta(a) {
+  const metaBits = [a.ville, a.code_postal].filter(Boolean).join(' ');
+  return el('div', { class: 'meta' }, [
+    metaBits ? el('span', { text: `📍 ${metaBits}` }) : null,
+    a.vendeur ? el('span', { text: `👤 ${a.vendeur}` }) : null,
+  ]);
+}
+
+function buildIcons(a) {
+  return el('div', { class: 'icons' }, [
+    a.lecteur_disque === true ? el('span', { class: 'yes', text: '💿 Lecteur disque' })
+      : a.lecteur_disque === false ? el('span', { class: 'no', text: '💿 Digital (sans disque)' })
+      : null,
+    a.manettes_incluses != null ? el('span', { text: `🎮 ${a.manettes_incluses} manette(s)` }) : null,
+    a.livraison_possible ? el('span', { text: '🚚 Livraison possible' }) : null,
+    a.likes != null ? el('span', { text: `❤ ${a.likes}` }) : null,
+  ]);
+}
+
+function buildBonus(a) {
+  return Array.isArray(a.accessoires_bonus) && a.accessoires_bonus.length
+    ? el('div', { class: 'meta', text: `🎁 ${a.accessoires_bonus.join(', ')}` })
+    : null;
+}
+
+function buildRaison(a) {
+  return a.disqualifiee && a.disqualification_raison
+    ? el('div', { class: 'raison', text: a.disqualification_raison })
+    : null;
+}
+
+function buildActions(a) {
+  const disqualifyBtn = a.disqualifiee
+    ? el('button', { class: 'requalify', text: '↺ Ré-qualifier', onclick: () => toggleDisqualify(a) })
+    : el('button', { class: 'disqualify', text: '✖ Disqualifier', onclick: () => toggleDisqualify(a) });
+
+  return el('div', { class: 'actions' }, [
+    el('a', { href: a.url_annonce, target: '_blank', rel: 'noopener', text: 'Voir l\'annonce ↗' }),
+    disqualifyBtn,
+  ]);
+}
+
+function buildCard(a) {
+  const imgArea = buildImageArea(a);
+
+  const priceRow = el('div', { class: 'price-row' }, [
+    el('div', { class: 'price', text: a.prix_eur != null ? `${a.prix_eur} €` : '— €' }),
+    el('div', { class: 'meta', text: a.etat || '' }),
+  ]);
+
+  const body = el('div', { class: 'body' }, [
+    priceRow, buildDateRow(a), buildTitre(a), buildMeta(a), buildIcons(a),
+    buildBonus(a), buildRaison(a), buildActions(a),
+  ]);
+
+  return el('div', { class: `card${a.disqualifiee ? ' disqualified' : ''}` }, [imgArea, body]);
+}
+
+function buildThumb(a) {
+  // Miniature compacte pour la vue liste : une seule photo (la première),
+  // avec le même badge de classification et le même compteur "1/N" que la
+  // grille — clic ouvre la visionneuse avec toutes les photos.
+  const imgs = imagesFor(a);
+  const thumb = el('div', { class: 'thumb', onclick: () => imgs.length && openLightbox(imgs, 0, a) });
+
+  thumb.appendChild(imgs.length
+    ? el('img', { src: imgs[0], alt: '' })
+    : el('div', { class: 'no-img', text: 'Pas de photo' }));
+
+  const cls = a.classification;
+  thumb.appendChild(el('div', { class: `badge ${cls || 'none'}`, text: cls ? BADGE_LABEL[cls] : '—' }));
+  if (imgs.length > 0) thumb.appendChild(el('div', { class: 'count-badge', text: `1/${imgs.length}` }));
+
+  return thumb;
+}
+
+function buildRow(a) {
+  const thumb = buildThumb(a);
+
+  const info = el('div', { class: 'info' }, [
+    buildTitre(a), buildDateRow(a), buildMeta(a), buildIcons(a), buildBonus(a), buildRaison(a),
+  ]);
+
+  const side = el('div', { class: 'side' }, [
+    el('div', { class: 'price', text: a.prix_eur != null ? `${a.prix_eur} €` : '— €' }),
+    buildActions(a),
+  ]);
+
+  return el('div', { class: `row${a.disqualifiee ? ' disqualified' : ''}` }, [thumb, info, side]);
+}
+
+async function toggleDisqualify(a) {
+  try {
+    const res = await fetch('/api/dashboard/disqualification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: a.id, disqualifiee: !a.disqualifiee }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    Object.assign(a, (await res.json()).annonce);
+    render();
+  } catch (e) {
+    setStatus(`Échec de la mise à jour : ${e.message}`, true);
+  }
+}
+
+function filteredSorted() {
+  const term = searchTerm.trim().toLowerCase();
+  let list = annonces.filter(a => {
+    const cls = a.classification || 'a_verifier'; // non-analysées traitées comme "à vérifier"
+    if (!activeClasses.has(cls)) return false;
+    if (term) {
+      const hay = `${a.titre || ''} ${a.ville || ''}`.toLowerCase();
+      if (!hay.includes(term)) return false;
+    }
+    return true;
+  });
+
+  list.sort((x, y) => {
+    if (sortMode === 'price_asc') return (x.prix_eur ?? Infinity) - (y.prix_eur ?? Infinity);
+    if (sortMode === 'price_desc') return (y.prix_eur ?? -Infinity) - (x.prix_eur ?? -Infinity);
+    if (sortMode === 'date_desc') return new Date(sortDate(y)) - new Date(sortDate(x));
+    // best: rang classification, puis prix croissant, puis date récente
+    const rx = RANK[x.classification] ?? 4;
+    const ry = RANK[y.classification] ?? 4;
+    if (rx !== ry) return rx - ry;
+    const px = x.prix_eur ?? Infinity, py = y.prix_eur ?? Infinity;
+    if (px !== py) return px - py;
+    return new Date(sortDate(y)) - new Date(sortDate(x));
+  });
+
+  return list;
+}
+
+function render() {
+  const list = filteredSorted();
+  document.getElementById('count').textContent = `— ${list.length} affichée(s) / ${annonces.length}`;
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const build = viewMode === 'list' ? buildRow : buildCard;
+  for (const a of list) grid.appendChild(build(a));
+}
+
+function setViewMode(mode) {
+  viewMode = mode;
+  try { localStorage.setItem('ps5-dashboard-view', mode); } catch { /* ignore */ }
+  document.getElementById('view-grid').classList.toggle('active', mode === 'grid');
+  document.getElementById('view-list').classList.toggle('active', mode === 'list');
+  document.getElementById('grid').classList.toggle('view-list', mode === 'list');
+  render();
+}
+
+function buildChips() {
+  const wrap = document.getElementById('chips');
+  wrap.innerHTML = '';
+  for (const c of CLASSES) {
+    const checkbox = el('input', { type: 'checkbox' });
+    checkbox.checked = activeClasses.has(c.key);
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) activeClasses.add(c.key); else activeClasses.delete(c.key);
+      render();
+    });
+    wrap.appendChild(el('label', { class: `chip active-${c.key}` }, [checkbox, ` ${c.label}`]));
+  }
+}
+
+document.getElementById('search').addEventListener('input', (e) => {
+  searchTerm = e.target.value;
+  render();
+});
+document.getElementById('sort').addEventListener('change', (e) => {
+  sortMode = e.target.value;
+  render();
+});
+document.getElementById('refresh').addEventListener('click', loadAnnonces);
+document.getElementById('view-grid').addEventListener('click', () => setViewMode('grid'));
+document.getElementById('view-list').addEventListener('click', () => setViewMode('list'));
+
+buildChips();
+document.getElementById('view-grid').classList.toggle('active', viewMode === 'grid');
+document.getElementById('view-list').classList.toggle('active', viewMode === 'list');
+document.getElementById('grid').classList.toggle('view-list', viewMode === 'list');
+loadAnnonces();
+</script>
+</body>
+</html>

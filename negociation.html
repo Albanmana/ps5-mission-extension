@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Copilote de négociation PS5</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172236;
+      --muted: #687387;
+      --line: #dce2ea;
+      --soft: #f3f6fa;
+      --paper: #ffffff;
+      --navy: #11213c;
+      --blue: #1463ff;
+      --blue-dark: #0b47c7;
+      --blue-soft: #eaf1ff;
+      --amber: #fff4d6;
+      --amber-ink: #7a4b00;
+      --green: #1d7a55;
+      --shadow: 0 18px 55px rgba(25, 38, 63, 0.10);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 2%, rgba(20, 99, 255, .10), transparent 24rem),
+        #f5f7fb;
+    }
+
+    button, textarea, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .topbar {
+      min-height: 76px;
+      padding: 17px 26px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      color: white;
+      background: var(--navy);
+      box-shadow: 0 8px 26px rgba(17, 33, 60, .18);
+    }
+
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      color: var(--navy);
+      background: white;
+    }
+    h1 { margin: 0; font-size: 18px; letter-spacing: -.2px; }
+    .subtitle { margin-top: 3px; color: #aebbd0; font-size: 13px; }
+    .privacy {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, .18);
+      border-radius: 999px;
+      color: #d5dfef;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .privacy-dot { width: 7px; height: 7px; border-radius: 50%; background: #55d99b; box-shadow: 0 0 0 4px rgba(85, 217, 155, .14); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+      gap: 18px;
+      max-width: 1500px;
+      min-height: calc(100vh - 76px);
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .panel {
+      min-width: 0;
+      border: 1px solid rgba(215, 222, 232, .9);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .93);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .sidebar { display: flex; flex-direction: column; max-height: calc(100vh - 112px); }
+    .sidebar-head { padding: 20px; border-bottom: 1px solid var(--line); }
+    .eyebrow { color: var(--blue); font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    h2 { margin: 6px 0 0; font-size: 20px; letter-spacing: -.35px; }
+    .filter {
+      margin-top: 15px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .filter input { width: 16px; height: 16px; accent-color: var(--blue); }
+    .conversation-list { margin: 0; padding: 10px; list-style: none; overflow-y: auto; }
+    .conversation-button {
+      width: 100%;
+      padding: 13px;
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 11px;
+      border: 1px solid transparent;
+      border-radius: 13px;
+      color: inherit;
+      text-align: left;
+      background: transparent;
+      transition: background .16s ease, border-color .16s ease, transform .16s ease;
+    }
+    .conversation-button:hover { background: var(--soft); transform: translateY(-1px); }
+    .conversation-button.selected { border-color: #b9ceff; background: var(--blue-soft); }
+    .thumb {
+      width: 44px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #e5ebf4, #f8fafc);
+    }
+    .thumb-fallback { display: grid; place-items: center; color: #8b96a9; font-weight: 800; font-size: 11px; }
+    .list-top { display: flex; gap: 8px; justify-content: space-between; align-items: baseline; }
+    .seller, .ad-title, .last-message { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .seller { font-weight: 750; }
+    .list-price { color: var(--blue-dark); font-weight: 800; font-size: 13px; white-space: nowrap; }
+    .ad-title { margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .last-message { margin-top: 7px; color: #3b4659; font-size: 12px; }
+    .empty-list { padding: 32px 16px; color: var(--muted); text-align: center; font-size: 14px; }
+
+    .workspace { min-height: calc(100vh - 112px); }
+    .empty-workspace { min-height: 460px; display: grid; place-items: center; padding: 40px; text-align: center; color: var(--muted); }
+    .empty-workspace strong { display: block; margin-bottom: 7px; color: var(--ink); font-size: 17px; }
+    .conversation-detail { display: none; }
+    .conversation-detail.visible { display: block; }
+    .detail-head {
+      padding: 20px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    .detail-head h2 { margin: 2px 0 0; }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      color: #31506f;
+      background: #edf2f7;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .content { padding: 20px 22px 28px; }
+    .ad-card {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr);
+      gap: 18px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--soft);
+    }
+    .ad-photo { width: 150px; height: 126px; object-fit: cover; border-radius: 11px; background: #e5eaf2; }
+    .ad-photo.hidden { display: none; }
+    .ad-main { min-width: 0; }
+    .ad-title-link { color: var(--ink); font-size: 18px; font-weight: 780; text-decoration: none; }
+    .ad-title-link[href]:hover { color: var(--blue); text-decoration: underline; }
+    .ad-price { margin-top: 5px; color: var(--blue-dark); font-size: 21px; font-weight: 850; }
+    .ad-meta, .delivery { margin-top: 7px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .description { margin: 10px 0 0; max-width: 76ch; color: #3f4a5c; font-size: 13px; line-height: 1.5; }
+
+    .state-grid {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 9px;
+    }
+    .state-card { padding: 10px 12px; border: 1px solid var(--line); border-radius: 11px; background: white; }
+    .state-card span { display: block; color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+    .state-card strong { display: block; margin-top: 5px; font-size: 13px; overflow-wrap: anywhere; }
+
+    .section-title { margin: 24px 0 12px; font-size: 14px; font-weight: 800; }
+    .thread {
+      max-height: 320px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      overflow-y: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fafc;
+    }
+    .bubble { max-width: min(78%, 680px); }
+    .bubble.mine { align-self: flex-end; }
+    .bubble.seller-message { align-self: flex-start; }
+    .bubble.system { align-self: center; max-width: 90%; text-align: center; }
+    .bubble-content { padding: 10px 12px; border-radius: 14px; background: white; box-shadow: 0 2px 10px rgba(28, 41, 66, .06); white-space: pre-wrap; line-height: 1.45; font-size: 13px; }
+    .bubble.mine .bubble-content { color: white; background: var(--blue); border-bottom-right-radius: 4px; }
+    .bubble.seller-message .bubble-content { border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+    .bubble.system .bubble-content { color: var(--muted); background: transparent; box-shadow: none; font-size: 12px; font-style: italic; }
+    .bubble-time { margin-top: 4px; color: #8a94a5; font-size: 10px; }
+    .bubble.mine .bubble-time { text-align: right; }
+
+    .composer { margin-top: 20px; padding: 17px; border-radius: 15px; background: var(--navy); }
+    .composer label { display: block; margin-bottom: 9px; color: white; font-size: 14px; font-weight: 750; }
+    textarea {
+      width: 100%;
+      min-height: 94px;
+      padding: 13px 14px;
+      resize: vertical;
+      border: 1px solid #73809a;
+      border-radius: 11px;
+      color: var(--ink);
+      background: white;
+      outline: none;
+      line-height: 1.45;
+    }
+    textarea:focus { border-color: #76a4ff; box-shadow: 0 0 0 3px rgba(99, 151, 255, .23); }
+    .composer-actions { margin-top: 11px; display: flex; justify-content: flex-end; }
+    .primary, .secondary {
+      padding: 10px 15px;
+      border-radius: 10px;
+      border: 0;
+      font-weight: 780;
+    }
+    .primary { color: white; background: var(--blue); box-shadow: 0 7px 18px rgba(20, 99, 255, .26); }
+    .primary:hover { background: #2e74ff; }
+    .primary:disabled { cursor: wait; opacity: .65; }
+    .secondary { color: var(--blue-dark); background: var(--blue-soft); }
+    .secondary:hover { background: #dfe9ff; }
+
+    .result, .stop, .error { display: none; margin-top: 14px; padding: 16px; border-radius: 14px; }
+    .result.visible, .stop.visible, .error.visible { display: block; }
+    .result { border: 1px solid #b8cdfd; background: #f3f7ff; }
+    .result-head { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+    .result-head strong { font-size: 15px; }
+    #draftText { margin-top: 12px; min-height: 110px; border-color: #b7c9ee; }
+    .result-meta { margin-top: 9px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .stop { border: 1px solid #f1cf75; color: var(--amber-ink); background: var(--amber); }
+    .stop-title { font-weight: 850; }
+    .stop p, .error p { margin: 6px 0 0; font-size: 13px; line-height: 1.45; }
+    .handoff-status { font-weight: 700; }
+    .handoff-status.failed { color: #8a2828; }
+    .handoff-retry { display: none; margin-top: 11px; }
+    .handoff-retry.visible { display: inline-block; }
+    .error { border: 1px solid #f1b7b7; color: #8a2828; background: #fff0f0; }
+    .error .secondary { margin-top: 11px; color: #8a2828; background: white; }
+
+    @media (max-width: 950px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { max-height: 390px; }
+      .workspace { min-height: 0; }
+      .state-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 620px) {
+      .topbar { padding: 14px 16px; }
+      .privacy { display: none; }
+      .layout { padding: 10px; gap: 10px; }
+      .panel { border-radius: 14px; }
+      .content, .detail-head { padding-left: 15px; padding-right: 15px; }
+      .ad-card { grid-template-columns: 1fr; }
+      .ad-photo { width: 100%; height: 210px; }
+      .state-grid { grid-template-columns: 1fr 1fr; }
+      .bubble { max-width: 90%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark">PS5</div>
+      <div>
+        <h1>Copilote de négociation</h1>
+        <div class="subtitle">Un brouillon à relire, jamais un envoi automatique</div>
+      </div>
+    </div>
+    <div class="privacy"><span class="privacy-dot"></span> Local · lecture seule</div>
+  </header>
+
+  <main class="layout">
+    <aside class="panel sidebar">
+      <div class="sidebar-head">
+        <div class="eyebrow">Messagerie</div>
+        <h2>Conversations <span id="conversationCount"></span></h2>
+        <label class="filter"><input id="showAll" type="checkbox"> Afficher les conversations terminées</label>
+      </div>
+      <ul id="conversationList" class="conversation-list"></ul>
+    </aside>
+
+    <section class="panel workspace">
+      <div id="emptyWorkspace" class="empty-workspace">
+        <div><strong>Sélectionne une conversation</strong>Le contexte de l’annonce et l’historique apparaîtront ici</div>
+      </div>
+
+      <article id="conversationDetail" class="conversation-detail">
+        <div class="detail-head">
+          <div>
+            <div class="eyebrow">Conversation avec</div>
+            <h2 id="sellerName"></h2>
+          </div>
+          <span id="statusPill" class="status-pill"></span>
+        </div>
+
+        <div class="content">
+          <section class="ad-card">
+            <img id="adPhoto" class="ad-photo" alt="">
+            <div class="ad-main">
+              <a id="adTitle" class="ad-title-link" target="_blank" rel="noreferrer"></a>
+              <div id="adPrice" class="ad-price"></div>
+              <div id="adMeta" class="ad-meta"></div>
+              <div id="delivery" class="delivery"></div>
+              <p id="adDescription" class="description"></p>
+            </div>
+          </section>
+
+          <div class="state-grid">
+            <div class="state-card"><span>Offre envoyée</span><strong id="sentOffer"></strong></div>
+            <div class="state-card"><span>Offre reçue</span><strong id="receivedOffer"></strong></div>
+            <div class="state-card"><span>Statut</span><strong id="currentStatus"></strong></div>
+            <div class="state-card"><span>Rendez-vous</span><strong id="meeting"></strong></div>
+          </div>
+
+          <h3 class="section-title">Historique</h3>
+          <div id="thread" class="thread"></div>
+
+          <form id="composer" class="composer">
+            <label for="sellerMessage">Message du vendeur</label>
+            <textarea id="sellerMessage" placeholder="Colle ici ce qu’il vient de t’écrire" required></textarea>
+            <div class="composer-actions">
+              <button id="generateButton" class="primary" type="submit">Générer la réponse</button>
+            </div>
+          </form>
+
+          <section id="draftResult" class="result" aria-live="polite">
+            <div class="result-head"><strong>Brouillon à envoyer</strong><button id="copyButton" class="secondary" type="button">Copier</button></div>
+            <textarea id="draftText" aria-label="Brouillon généré"></textarea>
+            <div id="draftMeta" class="result-meta"></div>
+          </section>
+
+          <section id="stopResult" class="stop" aria-live="polite">
+            <div class="stop-title">À toi de jouer</div>
+            <p id="stopReason"></p>
+            <p id="stopNotes"></p>
+            <p id="handoffStatus" class="handoff-status"></p>
+            <button id="handoffRetryButton" class="secondary handoff-retry" type="button">Réessayer la notification</button>
+          </section>
+
+          <section id="errorResult" class="error" aria-live="assertive">
+            <strong>La génération n’a pas abouti</strong>
+            <p id="errorMessage"></p>
+            <button id="retryButton" class="secondary" type="button">Réessayer</button>
+          </section>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    window.__NEGOTIATION_DATA__ = __NEGOTIATION_PAYLOAD__;
+
+    const conversations = Array.isArray(window.__NEGOTIATION_DATA__) ? window.__NEGOTIATION_DATA__ : [];
+    const activeStatuses = new Set(['ouverte', 'en_attente_moi']);
+    const statusLabels = {
+      ouverte: 'Ouverte',
+      en_attente_vendeur: 'En attente du vendeur',
+      en_attente_moi: 'À répondre',
+      rdv_pris: 'Rendez-vous pris',
+      conclue: 'Conclue',
+      abandonnee: 'Abandonnée',
+    };
+    const stopLabels = {
+      paiement_leboncoin_accepte: 'Le vendeur accepte l’envoi avec paiement leboncoin',
+      paiement_leboncoin_refuse: 'Le vendeur refuse l’envoi avec paiement leboncoin',
+      rdv_confirme: 'Le rendez-vous est calé avec un lieu et un horaire précis',
+      refus_categorique_prix: 'Le vendeur refuse catégoriquement de descendre au prix voulu',
+      defaut_majeur: 'Un défaut majeur vient d’être signalé',
+    };
+
+    const elements = Object.fromEntries([
+      'conversationCount', 'conversationList', 'showAll', 'emptyWorkspace', 'conversationDetail',
+      'sellerName', 'statusPill', 'adPhoto', 'adTitle', 'adPrice', 'adMeta', 'delivery',
+      'adDescription', 'sentOffer', 'receivedOffer', 'currentStatus', 'meeting', 'thread',
+      'composer', 'sellerMessage', 'generateButton', 'draftResult', 'draftText', 'draftMeta',
+      'copyButton', 'stopResult', 'stopReason', 'stopNotes', 'errorResult', 'errorMessage',
+      'retryButton', 'handoffStatus', 'handoffRetryButton',
+    ].map((id) => [id, document.getElementById(id)]));
+
+    let selectedId = null;
+    let generating = false;
+    let generationToken = 0;
+    let activeRequestController = null;
+    let activeHandoffController = null;
+    let handoffRequest = null;
+
+    // Fil accumulé pendant cette session de page (par conversation_id),
+    // jamais écrit en base : perdu si tu recharges. Permet d'enchaîner
+    // plusieurs tours de test en gardant la mémoire de ce qui a déjà été
+    // collé/généré, sans toucher à Supabase.
+    const sessionMessages = new Map();
+
+    function getThread(conversation) {
+      return [...(Array.isArray(conversation.messages) ? conversation.messages : []), ...(sessionMessages.get(conversation.id) || [])];
+    }
+
+    function text(value, fallback = '—') {
+      return value == null || value === '' ? fallback : String(value);
+    }
+
+    function money(value) {
+      return value == null ? '—' : `${Number(value).toLocaleString('fr-FR')} €`;
+    }
+
+    function dateTime(value) {
+      if (!value) return '—';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return text(value);
+      return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+    }
+
+    function photoUrl(conversation) {
+      return conversation.annonce?.images?.[0] || conversation.annonce?.image_url || '';
+    }
+
+    function clearResults() {
+      elements.draftResult.classList.remove('visible');
+      elements.stopResult.classList.remove('visible');
+      elements.errorResult.classList.remove('visible');
+      elements.draftText.value = '';
+      elements.draftMeta.textContent = '';
+      elements.handoffStatus.textContent = '';
+      elements.handoffStatus.classList.remove('failed');
+      elements.handoffRetryButton.classList.remove('visible');
+      handoffRequest = null;
+    }
+
+    function renderList() {
+      const visible = conversations.filter((item) => elements.showAll.checked || activeStatuses.has(item.statut));
+      elements.conversationList.replaceChildren();
+      elements.conversationCount.textContent = `(${visible.length})`;
+
+      if (visible.length === 0) {
+        const empty = document.createElement('li');
+        empty.className = 'empty-list';
+        empty.textContent = 'Aucune conversation dans ce filtre';
+        elements.conversationList.append(empty);
+        return;
+      }
+
+      for (const conversation of visible) {
+        const item = document.createElement('li');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `conversation-button${conversation.id === selectedId ? ' selected' : ''}`;
+        button.addEventListener('click', () => selectConversation(conversation.id));
+
+        const photo = photoUrl(conversation);
+        let media;
+        if (photo) {
+          media = document.createElement('img');
+          media.className = 'thumb';
+          media.src = photo;
+          media.alt = '';
+          media.addEventListener('error', () => {
+            const fallback = document.createElement('div');
+            fallback.className = 'thumb thumb-fallback';
+            fallback.textContent = 'PS5';
+            media.replaceWith(fallback);
+          }, { once: true });
+        } else {
+          media = document.createElement('div');
+          media.className = 'thumb thumb-fallback';
+          media.textContent = 'PS5';
+        }
+
+        const copy = document.createElement('div');
+        copy.style.minWidth = '0';
+        const top = document.createElement('div');
+        top.className = 'list-top';
+        const seller = document.createElement('span');
+        seller.className = 'seller';
+        seller.textContent = text(conversation.vendeur, 'Vendeur');
+        const price = document.createElement('span');
+        price.className = 'list-price';
+        price.textContent = money(conversation.annonce?.prix_eur);
+        top.append(seller, price);
+
+        const title = document.createElement('div');
+        title.className = 'ad-title';
+        title.textContent = text(conversation.annonce?.titre, 'Annonce sans titre');
+        const last = document.createElement('div');
+        last.className = 'last-message';
+        last.textContent = text(conversation.dernier_message, 'Pas encore de message');
+        copy.append(top, title, last);
+        button.append(media, copy);
+        item.append(button);
+        elements.conversationList.append(item);
+      }
+    }
+
+    function renderDelivery(modes) {
+      if (!modes || typeof modes !== 'object') return 'Remise non renseignée';
+      const labels = [];
+      if (modes.main_propre?.disponible) labels.push(`Main propre${modes.main_propre.lieu ? ` · ${modes.main_propre.lieu}` : ''}`);
+      if (modes.point_retrait?.disponible) labels.push('Point relais');
+      if (modes.domicile?.disponible) labels.push('Livraison à domicile');
+      return labels.length ? labels.join(' · ') : 'Aucun mode de remise renseigné';
+    }
+
+    function renderThread(messages) {
+      elements.thread.replaceChildren();
+      if (!Array.isArray(messages) || messages.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-list';
+        empty.textContent = 'Aucun message enregistré';
+        elements.thread.append(empty);
+        return;
+      }
+
+      for (const message of messages) {
+        const bubble = document.createElement('div');
+        const role = message.expediteur === 'moi' ? 'mine' : message.expediteur === 'systeme' ? 'system' : 'seller-message';
+        bubble.className = `bubble ${role}`;
+        const content = document.createElement('div');
+        content.className = 'bubble-content';
+        content.textContent = text(message.contenu, '');
+        const time = document.createElement('div');
+        time.className = 'bubble-time';
+        time.textContent = dateTime(message.envoye_le);
+        bubble.append(content, time);
+        elements.thread.append(bubble);
+      }
+      elements.thread.scrollTop = elements.thread.scrollHeight;
+    }
+
+    function selectConversation(id) {
+      const conversation = conversations.find((item) => item.id === id);
+      if (!conversation) return;
+      generationToken += 1;
+      activeRequestController?.abort();
+      activeRequestController = null;
+      activeHandoffController?.abort();
+      activeHandoffController = null;
+      setGenerating(false);
+      selectedId = id;
+      clearResults();
+      elements.sellerMessage.value = '';
+      elements.emptyWorkspace.style.display = 'none';
+      elements.conversationDetail.classList.add('visible');
+      elements.sellerName.textContent = text(conversation.vendeur, 'Vendeur');
+      elements.statusPill.textContent = statusLabels[conversation.statut] || text(conversation.statut);
+
+      const annonce = conversation.annonce || {};
+      const photo = photoUrl(conversation);
+      elements.adPhoto.classList.toggle('hidden', !photo);
+      elements.adPhoto.src = photo;
+      elements.adPhoto.alt = photo ? `Photo de ${text(annonce.titre, 'l’annonce')}` : '';
+      elements.adPhoto.onerror = () => elements.adPhoto.classList.add('hidden');
+      elements.adTitle.textContent = text(annonce.titre, 'Annonce sans titre');
+      if (annonce.url_annonce) elements.adTitle.href = annonce.url_annonce;
+      else elements.adTitle.removeAttribute('href');
+      elements.adPrice.textContent = money(annonce.prix_eur);
+      elements.adMeta.textContent = [annonce.etat, annonce.ville, annonce.code_postal].filter(Boolean).join(' · ') || 'Détails non renseignés';
+      elements.delivery.textContent = renderDelivery(annonce.modes_remise);
+      elements.adDescription.textContent = text(annonce.description, 'Description non renseignée');
+      elements.sentOffer.textContent = money(conversation.offre_envoyee_eur);
+      elements.receivedOffer.textContent = money(conversation.offre_recue_eur);
+      elements.currentStatus.textContent = statusLabels[conversation.statut] || text(conversation.statut);
+      elements.meeting.textContent = conversation.rdv_date || conversation.rdv_lieu
+        ? [conversation.rdv_lieu, dateTime(conversation.rdv_date)].filter((item) => item && item !== '—').join(' · ')
+        : '—';
+      renderThread(getThread(conversation));
+      renderList();
+    }
+
+    function setGenerating(value) {
+      generating = value;
+      elements.generateButton.disabled = value;
+      elements.retryButton.disabled = value;
+      elements.generateButton.textContent = value ? 'Génération…' : 'Générer la réponse';
+    }
+
+    async function notifyHandoff(requestToken, requestConversationId) {
+      if (!handoffRequest || requestToken !== generationToken || requestConversationId !== selectedId) return;
+      const controller = new AbortController();
+      activeHandoffController = controller;
+      elements.handoffStatus.classList.remove('failed');
+      elements.handoffStatus.textContent = 'Notification en cours…';
+      elements.handoffRetryButton.disabled = true;
+      elements.handoffRetryButton.classList.remove('visible');
+      try {
+        const response = await fetch('/api/handoff', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify(handoffRequest),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (controller.signal.aborted || requestToken !== generationToken || requestConversationId !== selectedId) return;
+        if (response.ok && payload.notified === false && payload.reason === 'email_non_configure') {
+          elements.handoffStatus.textContent = 'Notification e-mail non configurée : reprends la main directement.';
+          return;
+        }
+        if (!response.ok || payload.notified !== true || typeof payload.email_id !== 'string' || !payload.email_id.trim()) {
+          throw new Error(payload.error || 'La notification a échoué');
+        }
+        elements.handoffStatus.textContent = 'Notification envoyée.';
+      } catch (error) {
+        if (controller.signal.aborted || requestToken !== generationToken || requestConversationId !== selectedId) return;
+        elements.handoffStatus.textContent = 'La notification n’a pas pu être envoyée. Réessaie sans relancer l’analyse.';
+        elements.handoffStatus.classList.add('failed');
+        elements.handoffRetryButton.classList.add('visible');
+      } finally {
+        if (requestToken === generationToken && requestConversationId === selectedId) {
+          activeHandoffController = null;
+          elements.handoffRetryButton.disabled = false;
+        }
+      }
+    }
+
+    function retryHandoff() {
+      if (!handoffRequest || !selectedId || activeHandoffController) return;
+      notifyHandoff(generationToken, selectedId);
+    }
+
+    async function generate() {
+      if (generating || !selectedId) return;
+      const message = elements.sellerMessage.value.trim();
+      if (!message) {
+        elements.sellerMessage.focus();
+        return;
+      }
+
+      activeHandoffController?.abort();
+      activeHandoffController = null;
+      clearResults();
+      setGenerating(true);
+      const requestConversationId = selectedId;
+      const requestToken = ++generationToken;
+      const controller = new AbortController();
+      activeRequestController = controller;
+      try {
+        const response = await fetch('/api/negotiate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            conversation_id: selectedId,
+            message_vendeur: message,
+            session_messages: sessionMessages.get(selectedId) || [],
+          }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (requestToken !== generationToken || requestConversationId !== selectedId) return;
+        if (!response.ok) throw new Error(payload.error || 'Erreur de génération');
+
+        const thread = sessionMessages.get(requestConversationId) || [];
+        thread.push({ expediteur: 'vendeur', contenu: message, envoye_le: new Date().toISOString(), type: 'texte' });
+
+        if (payload.arret?.doit_arreter) {
+          elements.stopReason.textContent = stopLabels[payload.arret.raison] || 'Un point d’arrêt demande ton attention';
+          elements.stopNotes.textContent = text(payload.notes_internes, 'Relis la conversation avant de continuer');
+          elements.stopResult.classList.add('visible');
+          handoffRequest = {
+            conversation_id: requestConversationId,
+            message_vendeur: message,
+            handoff: payload,
+          };
+          notifyHandoff(requestToken, requestConversationId);
+        } else {
+          elements.draftText.value = payload.message || '';
+          const meta = [];
+          if (payload.offre_proposee_eur != null) meta.push(`Offre proposée : ${money(payload.offre_proposee_eur)}`);
+          if (payload.offre_recue_eur != null) meta.push(`Offre détectée : ${money(payload.offre_recue_eur)}`);
+          if (payload.lieu_propose) meta.push(`Lieu proposé : ${payload.lieu_propose}`);
+          if (payload.notes_internes) meta.push(payload.notes_internes);
+          elements.draftMeta.textContent = meta.join(' · ');
+          elements.draftResult.classList.add('visible');
+          elements.draftText.focus();
+
+          thread.push({
+            expediteur: 'moi',
+            contenu: payload.message || '',
+            envoye_le: new Date().toISOString(),
+            type: payload.offre_proposee_eur != null ? 'offre' : 'texte',
+            montant_eur: payload.offre_proposee_eur ?? null,
+          });
+        }
+
+        sessionMessages.set(requestConversationId, thread);
+        elements.sellerMessage.value = '';
+        const conversation = conversations.find((item) => item.id === requestConversationId);
+        if (conversation) renderThread(getThread(conversation));
+      } catch (error) {
+        if (controller.signal.aborted || requestToken !== generationToken || requestConversationId !== selectedId) return;
+        elements.errorMessage.textContent = error.message || 'Réessaie dans un instant';
+        elements.errorResult.classList.add('visible');
+      } finally {
+        if (requestToken === generationToken && requestConversationId === selectedId) {
+          activeRequestController = null;
+          setGenerating(false);
+        }
+      }
+    }
+
+    elements.showAll.addEventListener('change', () => {
+      renderList();
+      if (!elements.showAll.checked) {
+        const selected = conversations.find((item) => item.id === selectedId);
+        if (selected && !activeStatuses.has(selected.statut)) {
+          const first = conversations.find((item) => activeStatuses.has(item.statut));
+          if (first) selectConversation(first.id);
+        }
+      }
+    });
+    elements.composer.addEventListener('submit', (event) => { event.preventDefault(); generate(); });
+    elements.retryButton.addEventListener('click', generate);
+    elements.handoffRetryButton.addEventListener('click', retryHandoff);
+    elements.copyButton.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(elements.draftText.value);
+      } catch {
+        elements.draftText.select();
+        document.execCommand('copy');
+      }
+      elements.copyButton.textContent = 'Copié';
+      setTimeout(() => { elements.copyButton.textContent = 'Copier'; }, 1400);
+    });
+
+    renderList();
+    const initial = conversations.find((item) => activeStatuses.has(item.statut));
+    if (initial) selectConversation(initial.id);
+  </script>
+</body>
+</html>

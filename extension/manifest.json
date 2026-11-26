@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "PS5 mission",
+  "version": "0.1.0",
+  "description": "Recherche, contact et suivi des annonces PS5 leboncoin.",
+  "permissions": ["storage", "scripting", "tabs", "alarms", "sidePanel", "notifications"],
+  "host_permissions": [
+    "https://www.leboncoin.fr/*",
+    "http://127.0.0.1:8835/*"
+  ],
+  "background": { "service_worker": "sw/service-worker.js", "type": "module" },
+  "web_accessible_resources": [{
+    "resources": ["lib/parse-annonce.js", "lib/typing.js", "lib/settings.js"],
+    "matches": ["https://www.leboncoin.fr/*"]
+  }],
+  "side_panel": { "default_path": "panel/panel.html" },
+  "icons": { "16": "icons/icon-16.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" },
+  "action": {
+    "default_title": "PS5 mission",
+    "default_icon": { "16": "icons/icon-16.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" }
+  }
+}
