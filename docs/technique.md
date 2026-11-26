@@ -2,6 +2,7 @@
 
 Pour la personne qui maintient le projet. L'installation et l'usage sont dans le
 [README](../README.md).
+Pour adapter l'outil à un autre achat, voir [personnaliser.md](personnaliser.md).
 
 ## Architecture
 

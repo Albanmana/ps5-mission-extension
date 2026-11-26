@@ -11,6 +11,7 @@ votre Mac. Il peut :
 - vous rendre la main quand une décision humaine est nécessaire.
 
 La référence technique est dans [docs/technique.md](docs/technique.md).
+Pour acheter autre chose qu'une PS5 : [docs/personnaliser.md](docs/personnaliser.md).
 
 ## À lire avant de commencer
 
